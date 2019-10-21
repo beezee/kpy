@@ -124,10 +124,8 @@ class FooJson(MsgFormatContravariant[Foo, str, JsonType, Exception]):
     if not isinstance(j, JsonDict):
       return F1(TypeError('Expecting JSON object'))
     c = cast(JsonDict, j)
-    x = safe_parse(c, 'baz', int)
-    y = safe_parse(c, 'bar', str)
-    return bind2(append2(x, y), 
+    return bind2(
+      append2(
+        safe_parse(c, 'baz', int), 
+        safe_parse(c, 'bar', str)), 
       lambda t: F2(Foo(t[1], t[0])))
-    return bind2(x, 
-      lambda i: bind2(safe_parse(c.run, 'bar', str),
-        lambda s: F2(Foo(s, i))))
