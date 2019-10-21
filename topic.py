@@ -2,7 +2,19 @@ from abc import ABC, abstractmethod
 from adt import append2, bind2, fold2, F1, F2, Sum2
 from dataclasses import dataclass
 import json
-from typing import Any, Callable, Generic, TypeVar, Union, Tuple, Type
+from typing import Any, Callable, cast, Dict, Generic
+from typing import List, TypeVar, Union, Tuple, Type
+
+# from https://gist.github.com/catb0t/bd82f7815b7e95b5dd3c3ad294f3cbbf
+JsonPrimitive = Union[str, int, bool, None]
+JsonType = Union[JsonPrimitive, 'JsonList', 'JsonDict']
+
+# work around mypy#731: no recursive structural types yet
+class JsonList(List[JsonType]):
+    pass
+
+class JsonDict(Dict[str, JsonType]):
+    pass
 
 A = TypeVar('A')
 B = TypeVar('B')
@@ -13,9 +25,17 @@ F = TypeVar('F')
 
 Parsed = Sum2[C, A]
 
-@dataclass
-class Json(Generic[A]):
-  run: A
+def parse_json(j: str) -> Parsed[Exception, JsonType]:
+  try:
+    x = json.loads(j) # type: ignore
+    if isinstance(x, dict): # type: ignore
+      return F2(JsonDict(x))
+    elif isinstance(x, list): # type: ignore
+      return F2(JsonList(x))
+    else:
+      return F2(cast(JsonPrimitive, x))
+  except Exception as e:
+    return F1(e)
 
 class MsgFormat(ABC, Generic[A, B, C]):
   @abstractmethod
@@ -58,16 +78,16 @@ class MsgFormatContravariant(Generic[A, B, C, E],
   def map_error(self, e: E) -> Parsed[E, A]: 
     return F1(e)
 
-class JsonFormat(MsgFormat[Json[Any], str, Exception]):
-  def serialize(self, a: Json[Any]) -> str:
-    return json.dumps(a.run, separators=(',', ':'))
-  def deserialize(self, b: str) -> Parsed[Exception, Json[Any]]:
+class JsonFormat(MsgFormat[JsonType, str, Exception]):
+  def serialize(self, a: JsonType) -> str:
+    return json.dumps(a, separators=(',', ':'))
+  def deserialize(self, b: str) -> Parsed[Exception, JsonType]:
     try:
-      return F2(Json(json.loads(b)))
+      return parse_json(b)
     except Exception as e:
       return F1(e)
 
-def safe_parse(y: Any, k: str, t: Type[A]) -> Sum2[Exception, A]:
+def safe_parse(y: JsonDict, k: str, t: Type[A]) -> Sum2[Exception, A]:
   try:
     x = y[k]
     if isinstance(x, t):
@@ -90,14 +110,17 @@ def idr(t: Type[A]) -> Callable[[A], Parsed[Exception, A]]:
     return F2(a)
   return x
 
-class FooJson(MsgFormatContravariant[Foo, str, Json[Any], Exception]):
+class FooJson(MsgFormatContravariant[Foo, str, JsonType, Exception]):
   def orig(self) -> JsonFormat:
     return JsonFormat()
-  def coserialize(self, a: Foo) -> Json[Any]: 
-    return Json({"bar": a.bar, "baz": a.baz})
-  def map_deserialize(self, c: Json[Any]) -> Parsed[Exception, Foo]: 
-    x = bind2(safe_parse(c.run, 'baz', int), idr(int))
-    y = bind2(safe_parse(c.run, 'bar', str), idr(str))
+  def coserialize(self, a: Foo) -> JsonType: 
+    return JsonDict({"bar": a.bar, "baz": a.baz})
+  def map_deserialize(self, j: JsonType) -> Parsed[Exception, Foo]: 
+    if not isinstance(j, JsonDict):
+      return F1(TypeError('Expecting JSON object'))
+    c = cast(JsonDict, j)
+    x = bind2(safe_parse(c, 'baz', int), idr(int))
+    y = bind2(safe_parse(c, 'bar', str), idr(str))
     return bind2(append2(x, y), 
       lambda t: F2(Foo(t[1], t[0])))
     return bind2(x, 
