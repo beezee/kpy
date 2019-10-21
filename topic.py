@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from adt import append2, fold2, join2, F1, F2, Sum2
+from adt import append2, bind2, fold2, F1, F2, Sum2
 from dataclasses import dataclass
 import json
 from typing import Any, Callable, Generic, TypeVar, Union, Tuple, Type
@@ -85,10 +85,6 @@ class Foo:
   bar: str
   baz: int
 
-def idl(t: Type[A]) -> Callable[[Exception], Parsed[Exception, A]]:
-  def x(e: Exception) -> Parsed[Exception, A]:
-    return F1(e)
-  return x
 def idr(t: Type[A]) -> Callable[[A], Parsed[Exception, A]]:
   def x(a: A) -> Parsed[Exception, A]:
     return F2(a)
@@ -100,14 +96,10 @@ class FooJson(MsgFormatContravariant[Foo, str, Json[Any], Exception]):
   def coserialize(self, a: Foo) -> Json[Any]: 
     return Json({"bar": a.bar, "baz": a.baz})
   def map_deserialize(self, c: Json[Any]) -> Parsed[Exception, Foo]: 
-    x = fold2(safe_parse(c.run, 'baz', int), (idl(int), idr(int)))
-    y = fold2(safe_parse(c.run, 'bar', str), (idl(str), idr(str)))
-    def mkFoo(t: Tuple[int, str]) -> Parsed[Exception, Foo]:
-      return F2(Foo(t[1], t[0]))
-    def bindFoo(i: int) -> Parsed[Exception, Foo]:
-      def fromStr(s: str) -> Parsed[Exception, Foo]:
-        return mkFoo((i, s))
-      return fold2(safe_parse(c.run, 'bar', str), (idl(Foo), fromStr))
-    #return fold2(x, (idl(Foo), bindFoo))
-    return fold2(append2(x, y), (idl(Tuple[int, str]), mkFoo))
-
+    x = bind2(safe_parse(c.run, 'baz', int), idr(int))
+    y = bind2(safe_parse(c.run, 'bar', str), idr(str))
+    return bind2(append2(x, y), 
+      lambda t: F2(Foo(t[1], t[0])))
+    return bind2(x, 
+      lambda i: bind2(safe_parse(c.run, 'bar', str),
+        lambda s: F2(Foo(s, i))))

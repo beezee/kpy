@@ -18,11 +18,11 @@
     "default": {
         "py-foldadt": {
             "hashes": [
-                "sha256:3920b9f21c706097cdfffc0774db7dad14d398e0bb3e6c02610ff805c48cee6d",
-                "sha256:ca6b0279ef09d761788718c8f41c312aac99984017ac8b4ab8d8a685122d9c2b"
+                "sha256:294c996842960f9e0411939d36c68198c457c47427b66569801fd7b1a841e0af",
+                "sha256:f89bec713de721b4e921275ecd04511cbc1b057790cb63c072fbc21844b251ab"
             ],
             "index": "pypi",
-            "version": "==0.1.1"
+            "version": "==0.1.8"
         }
     },
     "develop": {
