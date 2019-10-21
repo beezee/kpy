@@ -45,9 +45,12 @@ class MsgFormat(ABC, Generic[A, B, C]):
 
 class MsgFormatPF(Generic[A, B, C, D, E, F], MsgFormat[A, B, E]):
 
-  # TODO - make sure this gets memoized
   @abstractmethod
-  def orig(self) -> MsgFormat[C, D, F]: pass
+  def _orig(self) -> MsgFormat[C, D, F]: pass
+
+  def __init__(self) -> None:
+    self.orig = self._orig()
+
   @abstractmethod
   def coserialize(self, a: A) -> C: pass
   @abstractmethod
@@ -60,10 +63,10 @@ class MsgFormatPF(Generic[A, B, C, D, E, F], MsgFormat[A, B, E]):
   def map_error(self, f: F) -> Parsed[E, A]: pass
 
   def serialize(self, a: A) -> B:
-    return self.map_serialize(self.orig().serialize(self.coserialize(a)))
+    return self.map_serialize(self.orig.serialize(self.coserialize(a)))
 
   def deserialize(self, d: B) -> Parsed[E, A]:
-    x = self.orig().deserialize(self.codeserialize(d))
+    x = self.orig.deserialize(self.codeserialize(d))
     return fold2(x, (self.map_error, self.map_deserialize))
 
 class MsgFormatContravariantLM(Generic[A, B, C, E, F], 
@@ -111,7 +114,7 @@ def idr(t: Type[A]) -> Callable[[A], Parsed[Exception, A]]:
   return x
 
 class FooJson(MsgFormatContravariant[Foo, str, JsonType, Exception]):
-  def orig(self) -> JsonFormat:
+  def _orig(self) -> JsonFormat:
     return JsonFormat()
   def coserialize(self, a: Foo) -> JsonType: 
     return JsonDict({"bar": a.bar, "baz": a.baz})
