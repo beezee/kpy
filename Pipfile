@@ -5,9 +5,11 @@ verify_ssl = true
 
 [dev-packages]
 mypy = "*"
+pytest = "*"
 
 [packages]
 py-foldadt = "*"
+hypothesis = "*"
 
 [requires]
 python_version = "3.7"
