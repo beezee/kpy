@@ -33,10 +33,10 @@
         },
         "py-foldadt": {
             "hashes": [
-                "sha256:364f2b12fbb35a511cd561df4e53407ef015e310e00e91597096bc8828d47b72"
+                "sha256:0cf3177cd8133efef11ad8ad69ab4750fd4eee66479c96bf13c8d5681b5e3ab3"
             ],
             "index": "pypi",
-            "version": "==0.1.9"
+            "version": "==0.1.10"
         }
     },
     "develop": {
