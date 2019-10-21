@@ -48,6 +48,8 @@ class MsgFormatPF(Generic[A, B, C, D, E, F], MsgFormat[A, B, E]):
   @abstractmethod
   def _orig(self) -> MsgFormat[C, D, F]: pass
 
+  # this is unfortunately up to dev discipline
+  # https://github.com/python/mypy/issues/4019
   def __init__(self) -> None:
     self.orig = self._orig()
 
