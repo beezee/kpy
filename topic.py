@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from adt import append2, bind2, fold2, F1, F2, Sum2
+from adt import append2, fold2, F1, F2, map2, Sum2
 from dataclasses import dataclass
 import json
 from typing import Any, Callable, cast, Dict, Generic
@@ -124,8 +124,8 @@ class FooJson(MsgFormatContravariant[Foo, str, JsonType, Exception]):
     if not isinstance(j, JsonDict):
       return F1(TypeError('Expecting JSON object'))
     c = cast(JsonDict, j)
-    return bind2(
+    return map2(
       append2(
         safe_parse(c, 'baz', int), 
         safe_parse(c, 'bar', str)), 
-      lambda t: F2(Foo(t[1], t[0])))
+      lambda t: Foo(t[1], t[0]))
