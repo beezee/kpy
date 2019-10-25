@@ -7,6 +7,9 @@ setup(
     description="Well typed kafka wrapper",
     keywords="kafka",
     url="https://github.com/beezee/kpy",
+    install_requires=[
+      'py-foldadt'
+    ],
     project_urls={
         "Source Code": "https://github.com/beezee/kpy",
     }

@@ -69,7 +69,7 @@ class MsgFormatPF(Generic[A, B, C, D, E, F], MsgFormat[A, B, E]):
 
   def deserialize(self, d: B) -> Parsed[E, A]:
     x = self.orig.deserialize(self.codeserialize(d))
-    return fold2(x, (self.map_error, self.map_deserialize))
+    return fold2((self.map_error, self.map_deserialize))(x)
 
 class MsgFormatContravariantLM(Generic[A, B, C, E, F], 
                                MsgFormatPF[A, B, C, B, E, F]):
